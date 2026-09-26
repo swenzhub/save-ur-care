@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ป้องกันรถน้ำท่วม — Vios 2012</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── tokens ─────────────────────────────────────────── */
+:root{
+  /* light = การ์ดขั้นตอนแบบพิมพ์บนกระดาษกันน้ำ */
+  --bg:#DDE4E1;
+  --card:#F2F5F3;
+  --card-2:#E6ECE9;
+  --ink:#16221F;
+  --ink-2:#4F635E;
+  --ink-3:#7B8F8A;
+  --rule:#C3CFCA;
+  --water:#3E7F80;
+  --water-soft:rgba(62,127,128,.22);
+  --hazard:#B8860B;
+  --hazard-ink:#6B4E06;
+  --alarm:#C0262C;
+  --alarm-soft:rgba(192,38,44,.10);
+  --ok:#2F7A54;
+  --shadow:0 1px 0 var(--rule);
+
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1C1E;
+    --card:#152A2D;
+    --card-2:#1B3336;
+    --ink:#E6F0ED;
+    --ink-2:#9FB8B4;
+    --ink-3:#6E8A87;
+    --rule:#26454A;
+    --water:#3C8B8C;
+    --water-soft:rgba(60,139,140,.30);
+    --hazard:#F2C044;
+    --hazard-ink:#F2C044;
+    --alarm:#F26B6B;
+    --alarm-soft:rgba(242,107,107,.12);
+    --ok:#5FC08C;
+    --shadow:0 1px 0 rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1C1E; --card:#152A2D; --card-2:#1B3336;
+  --ink:#E6F0ED; --ink-2:#9FB8B4; --ink-3:#6E8A87; --rule:#26454A;
+  --water:#3C8B8C; --water-soft:rgba(60,139,140,.30);
+  --hazard:#F2C044; --hazard-ink:#F2C044;
+  --alarm:#F26B6B; --alarm-soft:rgba(242,107,107,.12);
+  --ok:#5FC08C; --shadow:0 1px 0 rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:inherit}
+
+html{-webkit-text-size-adjust:100%;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 12px)}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Sans Thai Looped','IBM Plex Sans Thai','Noto Sans Thai','Leelawadee UI',Thonburi,system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.72;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:680px;margin:0 auto;padding:22px 16px 72px}
+
+h1,h2,h3,.ui{font-family:'IBM Plex Sans Thai','Noto Sans Thai','Leelawadee UI',Thonburi,system-ui,sans-serif}
+
+/* ── head ───────────────────────────────────────────── */
+.masthead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+h1{font-size:1.5rem;font-weight:700;line-height:1.35;margin:0;letter-spacing:-.01em}
+.sub{color:var(--ink-2);font-size:.9rem;margin:2px 0 22px}
+.themebtn{
+  flex:none;background:none;border:1px solid var(--rule);color:var(--ink-2);
+  border-radius:999px;padding:5px 12px;font:inherit;font-size:.8rem;cursor:pointer;
+}
+.themebtn:hover{color:var(--ink);border-color:var(--water)}
+
+/* ── gauge ──────────────────────────────────────────── */
+.gaugecard{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:18px 16px 14px;box-shadow:var(--shadow)}
+.gaugetop{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:14px}
+.gaugelabel{font-size:.86rem;color:var(--ink-2);line-height:1.4}
+.reading{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:700;font-size:2.6rem;line-height:1;letter-spacing:-.02em}
+.reading span{font-size:1rem;font-weight:500;color:var(--ink-2);margin-left:3px}
+
+.gaugebody{display:flex;gap:14px;align-items:stretch}
+.column{
+  position:relative;width:62px;flex:none;height:300px;
+  background:var(--card-2);border:1px solid var(--rule);border-radius:7px;
+  overflow:hidden;cursor:ns-resize;touch-action:none;
+}
+.column:focus-visible{outline:3px solid var(--water);outline-offset:3px}
+.fill{
+  position:absolute;left:0;right:0;bottom:0;height:35%;
+  background:var(--water-soft);border-top:2.5px solid var(--water);
+  transition:height .18s ease-out;
+}
+.grab{position:absolute;left:0;right:0;bottom:35%;height:26px;margin-bottom:-13px;transition:bottom .18s ease-out}
+.grab::after{content:"";position:absolute;left:50%;top:50%;width:26px;height:4px;margin:-2px 0 0 -13px;border-radius:2px;background:var(--water)}
+
+.scale{position:relative;flex:1;min-width:0;height:300px}
+.mark{position:absolute;left:0;right:0;transform:translateY(50%);padding-left:10px}
+.mark::before{content:"";position:absolute;left:-14px;top:50%;width:10px;height:1px;background:var(--rule)}
+.mark b{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:600;font-size:.8rem;color:var(--ink-3);margin-right:7px}
+.mark i{font-style:normal;font-size:.84rem;color:var(--ink-2);line-height:1.3}
+.mark.crit b,.mark.crit i{color:var(--alarm)}
+.mark.warn b,.mark.warn i{color:var(--hazard-ink)}
+
+.steppers{display:flex;gap:8px;margin-top:14px}
+.steppers button{
+  flex:1;background:var(--card-2);border:1px solid var(--rule);color:var(--ink);
+  border-radius:9px;padding:11px;font:inherit;font-weight:600;font-size:.95rem;cursor:pointer;
+  font-family:'IBM Plex Sans Thai',sans-serif;
+}
+.steppers button:hover{border-color:var(--water)}
+.steppers button:active{background:var(--water-soft)}
+
+.verdict{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.92rem;line-height:1.6;border-left:4px solid var(--water);background:var(--card-2)}
+.verdict.warn{border-left-color:var(--hazard)}
+.verdict.crit{border-left-color:var(--alarm);background:var(--alarm-soft)}
+.verdict strong{font-family:'IBM Plex Sans Thai',sans-serif}
+
+/* ── sections ───────────────────────────────────────── */
+h2{font-size:1.08rem;font-weight:700;margin:38px 0 4px;letter-spacing:-.005em}
+.note{color:var(--ink-2);font-size:.88rem;margin:0 0 14px}
+
+.progress{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:.86rem;color:var(--ink-2)}
+.bar{flex:1;height:5px;background:var(--rule);border-radius:3px;overflow:hidden}
+.bar>div{height:100%;width:0;background:var(--ok);transition:width .25s ease}
+.resetbtn{background:none;border:0;color:var(--ink-3);font:inherit;font-size:.82rem;text-decoration:underline;cursor:pointer;padding:0}
+.resetbtn:hover{color:var(--alarm)}
+
+/* ── steps ──────────────────────────────────────────── */
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+ol.steps>li{counter-increment:s;border-top:1px solid var(--rule);padding:16px 0}
+ol.steps>li:last-child{border-bottom:1px solid var(--rule)}
+.head{display:flex;gap:13px;align-items:flex-start;cursor:pointer}
+.num{
+  flex:none;width:28px;height:28px;margin-top:2px;border-radius:50%;
+  border:1.5px solid var(--rule);color:var(--ink-3);
+  font-family:'IBM Plex Sans Thai',sans-serif;font-weight:600;font-size:.88rem;
+  display:flex;align-items:center;justify-content:center;transition:all .16s;
+}
+.head input{position:absolute;opacity:0;width:0;height:0}
+.num::after{content:counter(s)}
+.head input:checked ~ .num{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.head input:checked ~ .num::after{content:"✓"}
+.head input:focus-visible ~ .num{outline:3px solid var(--water);outline-offset:2px}
+.title{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:600;font-size:1.02rem;line-height:1.5;flex:1}
+.head input:checked ~ .title{color:var(--ink-3);text-decoration:line-through;text-decoration-thickness:1px}
+.time{flex:none;font-size:.78rem;color:var(--ink-3);margin-top:5px}
+.detail{padding-left:41px;margin-top:8px}
+.detail p{margin:0 0 9px}
+.detail ul{margin:0 0 9px;padding-left:19px}
+.detail li{margin-bottom:6px}
+.detail em{font-style:normal;color:var(--alarm);font-weight:600}
+.why{color:var(--ink-2);font-size:.88rem;border-left:2px solid var(--rule);padding-left:11px;margin:0 0 10px}
+
+/* ── forbid ─────────────────────────────────────────── */
+.forbid{background:var(--alarm-soft);border:1px solid var(--alarm);border-radius:14px;padding:16px 18px;margin-top:10px}
+.forbid h2{margin:0 0 10px;color:var(--alarm);font-size:1.02rem}
+.forbid ol{margin:0;padding-left:20px}
+.forbid li{margin-bottom:9px}
+.forbid li:last-child{margin-bottom:0}
+
+/* ── kit ────────────────────────────────────────────── */
+ul.kit{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px}
+ul.kit li{border-bottom:1px solid var(--rule)}
+ul.kit label{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;cursor:pointer;font-size:.93rem}
+ul.kit input{position:absolute;opacity:0;width:0;height:0}
+.box{flex:none;width:17px;height:17px;margin-top:5px;border:1.5px solid var(--rule);border-radius:4px;transition:all .14s;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--bg)}
+ul.kit input:checked ~ .box{background:var(--ok);border-color:var(--ok)}
+ul.kit input:checked ~ .box::after{content:"✓"}
+ul.kit input:focus-visible ~ .box{outline:3px solid var(--water);outline-offset:2px}
+ul.kit input:checked ~ .kt{color:var(--ink-3)}
+.kt small{display:block;color:var(--ink-3);font-size:.8rem;line-height:1.45}
+
+/* ── after ──────────────────────────────────────────── */
+ol.after{margin:0;padding-left:21px}
+ol.after li{margin-bottom:9px}
+
+footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--rule);color:var(--ink-3);font-size:.82rem;line-height:1.65}
+
+@media (max-width:420px){
+  .wrap{padding:18px 13px 60px}
+  .reading{font-size:2.2rem}
+  .column{width:52px}
+  .detail{padding-left:0;margin-top:11px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="masthead">
+  <h1>ป้องกันรถก่อนน้ำท่วม</h1>
+  <button class="themebtn ui" id="theme" type="button">สลับธีม</button>
+</div>
+<p class="sub">Toyota Vios 2012 · จอดกับที่ ขยับไม่ได้ · ทำเองคนเดียว</p>
+
+<!-- HERO: เกจระดับน้ำ -->
+<div class="gaugecard">
+  <div class="gaugetop">
+    <div>
+      <div class="gaugelabel">ระดับน้ำตอนนี้ วัดจากพื้นถึงผิวน้ำ</div>
+      <div class="reading"><span id="rd">30</span><span>ซม.</span></div>
+    </div>
+  </div>
+
+  <div class="gaugebody">
+    <div class="column" id="col" tabindex="0" role="slider"
+         aria-label="ระดับน้ำปัจจุบัน หน่วยเซนติเมตร"
+         aria-valuemin="0" aria-valuemax="90" aria-valuenow="30">
+      <div class="fill" id="fill"></div>
+      <div class="grab" id="grab"></div>
+    </div>
+    <div class="scale" id="scale"></div>
+  </div>
+
+  <div class="steppers">
+    <button type="button" id="dn" class="ui">− 5 ซม.</button>
+    <button type="button" id="up" class="ui">+ 5 ซม.</button>
+  </div>
+
+  <div class="verdict" id="verdict"></div>
+</div>
+
+<!-- STEPS -->
+<h2>ลำดับการทำ</h2>
+<p class="note">เรียงตามผลตอบแทนต่อเวลาที่ใช้ ทำจากบนลงล่าง ถ้าน้ำขึ้นเร็วจนทำไม่ครบ ข้อ 1–3 ต้องเสร็จ</p>
+
+<div class="progress">
+  <span id="pcount">เสร็จ 0 จาก 7</span>
+  <div class="bar"><div id="pbar"></div></div>
+  <button class="resetbtn" id="reset" type="button">ล้างเครื่องหมาย</button>
+</div>
+
+<ol class="steps" id="steps">
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s1">
+      <span class="num"></span>
+      <span class="title">ถอดขั้วแบตเตอรี่</span>
+      <span class="time">5 นาที</span>
+    </label>
+    <div class="detail">
+      <p class="why">ความเสียหายส่วนใหญ่ของรถจมน้ำมาจากไฟลัดวงจรขณะยังมีไฟเลี้ยง ไม่ใช่จากน้ำเอง ข้อนี้ป้องกันของที่แพงที่สุด</p>
+      <ul>
+        <li>กดปุ่มปลดฝากระโปรงในห้องโดยสารก่อน แล้วค่อยเปิดฝา</li>
+        <li><em>ปิดกระจกทุกบานให้สนิทก่อน</em> ถอดแบตแล้วกระจกไฟฟ้าจะยกไม่ได้</li>
+        <li>ประแจเบอร์ 10 คลาย <em>ขั้วลบ (−) ก่อนเสมอ</em> แล้วค่อยขั้วบวก (+)</li>
+        <li>ห่อปลายสายทั้งสองด้วยถุงพลาสติก รัดยาง แยกไม่ให้แตะกัน</li>
+        <li>ยกแบตออกไปเก็บที่สูงถ้าทำได้</li>
+      </ul>
+      <p>จากนี้ล็อกรถ เอากุญแจขึ้นบ้าน และห้ามบิดกุญแจอีกจนกว่าช่างจะตรวจ</p>
+    </div>
+  </li>
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s2">
+      <span class="num"></span>
+      <span class="title">หนุนล้อยกรถ</span>
+      <span class="time">30–60 นาที</span>
+    </label>
+    <div class="detail">
+      <p class="why">ได้ความสูงเพิ่ม 20–30 ซม. มักพอทำให้พ้นระดับพรม ไดสตาร์ท และปลั๊กไฟใต้เบาะ เป็นขั้นตอนที่คุ้มค่าที่สุดถ้าพื้นแข็งพอ</p>
+      <ul>
+        <li>จุดยกแม่แรงคือสันเหล็กใต้ธรณีประตู มีรอยบากเป็นจุดสังเกต ห่างจากซุ้มล้อราวหนึ่งฝ่ามือ</li>
+        <li><em>วางแผ่นไม้หนาใต้ฐานแม่แรงทุกครั้ง</em> พื้นที่แช่น้ำจะนิ่มลงเรื่อย ๆ</li>
+        <li>วางอิฐบล็อกตัน <em>ใต้หน้ายาง ไม่ใช่ใต้ตัวถัง</em> ซ้อนไม่เกิน 2–3 ชั้น สลับทิศทางแบบก่ออิฐ</li>
+        <li>ไล่ทีละล้อแบบทแยง หน้าซ้าย → หลังขวา → หน้าขวา → หลังซ้าย</li>
+      </ul>
+      <p><em>ข้ามข้อนี้ไปเลย</em>ถ้าพื้นเป็นดินหรือทรายที่นิ่มแล้ว ความเสี่ยงรถตกทับสูงกว่าประโยชน์ที่ได้ และห้ามมุดใต้รถขณะอยู่บนแม่แรง</p>
+    </div>
+  </li>
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s3">
+      <span class="num"></span>
+      <span class="title">ปลดเบรกมือ แล้วหนุนล้อกันไหล</span>
+      <span class="time">5 นาที</span>
+    </label>
+    <div class="detail">
+      <p class="why">ดึงเบรกมือค้างในน้ำ 2–3 วัน ผ้าเบรกดรัมหลังจะขึ้นสนิมติดจานจนล้อไม่หมุน ตอนลากรถออกจะยิ่งเสียหาย</p>
+      <ul>
+        <li>ใส่เกียร์ P</li>
+        <li>ปลดเบรกมือลงสุด</li>
+        <li>เอาอิฐหรือไม้หนุนหน้า–หลังล้อแทน กันรถไหลตามพื้นลาด</li>
+      </ul>
+    </div>
+  </li>
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s4">
+      <span class="num"></span>
+      <span class="title">อุดท่อไอเสียและท่อไอดี</span>
+      <span class="time">15–20 นาที</span>
+    </label>
+    <div class="detail">
+      <p class="why">ท่อไอดีคือทางเดียวที่น้ำเข้าห้องเผาไหม้ได้ ถ้ากันตรงนี้ไว้ได้ เครื่องยนต์รอด</p>
+      <ul>
+        <li><b>ปลายท่อไอเสีย</b> ถุงพลาสติกซ้อน 2 ชั้นครอบ รัดด้วยยางหรือเทปให้แน่น กันโคลนเข้าไปค้างในหม้อพัก</li>
+        <li><b>ท่อไอดี</b> อยู่หน้าซ้ายของห้องเครื่อง เป็นท่อพลาสติกดำต่อจากกล่องกรองอากาศพุ่งไปทางกันชน วิธีง่ายสุดคือห่อทั้งกล่องกรองอากาศพร้อมท่อด้วยถุงใหญ่ มัดปากถุงแน่นที่จุดต่อเข้าเครื่อง</li>
+        <li>ตรวจฝาถังน้ำมันให้ปิดสนิท</li>
+      </ul>
+      <p><em>จดไว้ว่าอุดตรงไหนบ้าง</em> ถ้าสตาร์ทโดยลืมถอดถุงออก เครื่องจะดูดเข้าไป</p>
+    </div>
+  </li>
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s5">
+      <span class="num"></span>
+      <span class="title">เก็บของออกจากห้องโดยสาร</span>
+      <span class="time">15 นาที</span>
+    </label>
+    <div class="detail">
+      <ul>
+        <li>เอกสารรถ ทะเบียน พ.ร.บ. กรมธรรม์ประกัน — เปียกแล้วขอใหม่ยุ่งยาก</li>
+        <li>พรมปูพื้นทุกผืน ยกออกมาเก็บที่สูง ลดสิ่งที่อมน้ำและเป็นแหล่งเชื้อรา</li>
+        <li>กล้องหน้ารถ ที่ชาร์จ ของใช้ส่วนตัว</li>
+        <li>กล่อง ECU อยู่ใต้คอนโซลฝั่งคนนั่ง ตำแหน่งค่อนข้างต่ำ เป็นชิ้นแพงที่สุดที่จะโดนน้ำก่อน ถ้าถอดปลั๊กเป็นให้ยกออก ถ้าไม่เคยทำอย่าเสี่ยงงัดจนหัก</li>
+        <li>ปิดช่องแอร์ และเลื่อนเบาะไปหน้าสุดเพื่อเปิดพื้นที่ให้ลมไหลตอนตากแห้ง</li>
+      </ul>
+    </div>
+  </li>
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s6">
+      <span class="num"></span>
+      <span class="title">ผูกรถกันลอย</span>
+      <span class="time">10 นาที</span>
+    </label>
+    <div class="detail">
+      <p class="why">ทำเมื่อประเมินว่าน้ำจะถึง 70 ซม. ขึ้นไป รถเก๋งลอยได้จริงและเคยไหลไปชนบ้านคนอื่นมาแล้ว</p>
+      <ul>
+        <li>คล้องเชือกที่ห่วงลากใต้กันชนหน้า เปิดฝาปิดกลมที่กันชนแล้วขันห่วงลากในชุดเครื่องมือประจำรถเข้าไป หรือคล้องที่คานใต้ท้องรถ</li>
+        <li><em>ห้ามคล้องกันชนพลาสติกเปล่า ๆ</em></li>
+        <li>ยึดกับเสาบ้านหรือโครงสร้างที่มั่นคง ปล่อยเชือกหย่อนพอให้รถลอยขึ้นได้แต่ไม่ไหลไปไหน</li>
+      </ul>
+    </div>
+  </li>
+
+  <li>
+    <label class="head">
+      <input type="checkbox" data-k="s7">
+      <span class="num"></span>
+      <span class="title">ถ่ายรูปและแจ้งประกัน</span>
+      <span class="time">10 นาที</span>
+    </label>
+    <div class="detail">
+      <ul>
+        <li>ถ่ายรถทั้งคัน ทะเบียน ระดับน้ำเทียบกับล้อ และสภาพรอบบ้าน ให้มีวันเวลาในไฟล์</li>
+        <li>โทรแจ้งประกันตอนนี้เลย ทั้งที่รถยังไม่จม ขอเลขรับแจ้งเก็บไว้เป็นหลักฐานลำดับเวลา</li>
+        <li>ประกันชั้น 1 คุ้มครองน้ำท่วมตามกรมธรรม์มาตรฐาน ไม่ต้องมีคู่กรณี</li>
+        <li>ชั้น 2+ และ 3+ ส่วนใหญ่ไม่คุ้มครองน้ำท่วม</li>
+        <li>หลายบริษัทมีรถลากย้ายไปที่สูงให้ฟรีช่วงน้ำท่วม อาจยังทันถ้าน้ำยังไม่ถึงขอบประตู ข้อนี้คุ้มค่าโทรถามที่สุด</li>
+      </ul>
+    </div>
+  </li>
+
+</ol>
+
+<!-- FORBID -->
+<div class="forbid">
+  <h2>ห้ามทำ</h2>
+  <ol>
+    <li><b>ห้ามบิดกุญแจหรือสตาร์ทเครื่อง</b> ไม่ว่าจะเพื่อลองดูหรือคิดว่าไล่น้ำ นี่คือสาเหตุอันดับหนึ่งที่ทำให้ค่าซ่อมจากหลักหมื่นกลายเป็นหลักแสน และเป็นเหตุผลที่ประกันปฏิเสธเคลมบ่อยที่สุด</li>
+    <li><b>ตัดเบรกเกอร์ไฟบ้านโซนที่น้ำจะถึงก่อนลงไปทำงานรอบรถ</b> ปลั๊กหรือสายไฟที่จมน้ำอันตรายกว่าตัวรถมาก</li>
+    <li>ห้ามทำงานใต้รถที่อยู่บนแม่แรง</li>
+    <li>ห้ามเปิดฝากระโปรงทิ้งไว้ขณะฝนตก</li>
+  </ol>
+</div>
+
+<!-- KIT -->
+<h2>ของที่ต้องหยิบก่อนเริ่ม</h2>
+<p class="note">หาในบ้านได้เกือบทั้งหมด</p>
+<ul class="kit" id="kit">
+  <li><label><input type="checkbox" data-k="k1"><span class="box"></span><span class="kt">ถุงพลาสติกหนา หรือถุงดำ<small>ซ้อน 2–3 ชั้น</small></span></label></li>
+  <li><label><input type="checkbox" data-k="k2"><span class="box"></span><span class="kt">เทปพันท่อ หรือยางรัด<small>ใช้เชือกฟางหรือลวดแทนได้</small></span></label></li>
+  <li><label><input type="checkbox" data-k="k3"><span class="box"></span><span class="kt">ประแจเบอร์ 10<small>ประแจเลื่อนหรือคีมก็ได้</small></span></label></li>
+  <li><label><input type="checkbox" data-k="k4"><span class="box"></span><span class="kt">อิฐบล็อกตัน ไม้หมอน แผ่นปูทางเดิน<small>ยางรถเก่าก็ใช้ได้</small></span></label></li>
+  <li><label><input type="checkbox" data-k="k5"><span class="box"></span><span class="kt">แม่แรงติดรถ และแผ่นไม้หนารองแม่แรง</span></label></li>
+  <li><label><input type="checkbox" data-k="k6"><span class="box"></span><span class="kt">ไฟฉายคาดหัว<small>มือว่างทั้งสองข้าง</small></span></label></li>
+  <li><label><input type="checkbox" data-k="k7"><span class="box"></span><span class="kt">เชือกหรือสลิง</span></label></li>
+  <li><label><input type="checkbox" data-k="k8"><span class="box"></span><span class="kt">ไม้ปักทำเครื่องหมายระดับน้ำ<small>วัดอัตราการขึ้นทุก 30 นาที</small></span></label></li>
+</ul>
+
+<!-- AFTER -->
+<h2>หลังน้ำลด ก่อนสตาร์ท</h2>
+<p class="note">ทำตามลำดับ อย่าข้าม</p>
+<ol class="after">
+  <li>ดึงก้านวัดน้ำมันเครื่อง ถ้าน้ำมันขุ่นเป็นสีกาแฟใส่นมแปลว่ามีน้ำเข้า ห้ามสตาร์ทเด็ดขาด ต้องถ่ายทิ้งก่อน</li>
+  <li>ถอดถุงที่อุดท่อไอดีและท่อไอเสียออกให้ครบตามที่จดไว้</li>
+  <li>ถอดกรองอากาศดู ถ้าเปียกแปลว่าน้ำอาจถึงท่อไอดี ต้องถอดหัวเทียนแล้วหมุนเครื่องด้วยมือไล่น้ำออกจากกระบอกสูบก่อน เป็นงานช่าง</li>
+  <li>เปลี่ยนน้ำมันเครื่องและกรอง น้ำมันเกียร์ น้ำมันเบรก กรองอากาศ เกียร์ออโต้ไวต่อน้ำมาก</li>
+  <li>ล้างและเป่าลมแห้งปลั๊กไฟ ไดสตาร์ท ไดชาร์จ กล่องฟิวส์</li>
+  <li>รื้อพรมและซับในออกตากให้แห้งภายใน 2–3 วัน ไม่งั้นเชื้อราและกลิ่นจะอยู่ถาวร</li>
+  <li>ให้ช่างสแกน ECU หาโค้ดผิดปกติก่อนใช้งานจริง</li>
+</ol>
+
+<footer>
+  ตัวเลขระดับน้ำเป็นค่าประมาณสำหรับ Vios ปี 2012 ตัวถัง NCP93 วัดจากพื้นถึงผิวน้ำ อาจคลาดเคลื่อนตามขนาดยางและการบรรทุก<br>
+  เกณฑ์ตัดสินใจหน้างาน ถ้าน้ำขึ้นเกิน 10 ซม. ต่อชั่วโมง ให้เลิกทำงานละเอียดแล้วเอาตัวเองกับเอกสารสำคัญขึ้นที่สูงก่อน รถซ่อมได้
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="viosflood.v1", MAX=90;
+  var store={};
+  try{ var raw=localStorage.getItem(KEY); if(raw) store=JSON.parse(raw)||{}; }catch(e){ store={}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+
+  /* ---- theme ---- */
+  var root=document.documentElement;
+  if(store.theme) root.setAttribute("data-theme", store.theme);
+  document.getElementById("theme").addEventListener("click", function(){
+    var cur=root.getAttribute("data-theme");
+    if(!cur){ cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
+    var next = cur==="dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next); store.theme=next; save();
+  });
+
+  /* ---- gauge ---- */
+  var MARKS=[
+    {cm:25, t:"ปลายท่อไอเสีย ยังไม่เสียหายถ้าไม่สตาร์ท", c:""},
+    {cm:32, t:"ขอบประตู พรม ไดสตาร์ท", c:""},
+    {cm:45, t:"ไดชาร์จ กล่องฟิวส์ ปลั๊กใต้พรม", c:"warn"},
+    {cm:60, t:"ปากท่อไอดี จุดตายของเครื่องยนต์", c:"crit"},
+    {cm:75, t:"รถเริ่มลอยและไหลไปชนของอื่น", c:"crit"}
+  ];
+  var scale=document.getElementById("scale");
+  MARKS.forEach(function(m){
+    var d=document.createElement("div");
+    d.className="mark "+m.c;
+    d.style.bottom=(m.cm/MAX*100)+"%";
+    d.innerHTML='<b>'+m.cm+' ซม.</b><i>'+m.t+'</i>';
+    scale.appendChild(d);
+  });
+
+  var col=document.getElementById("col"), fill=document.getElementById("fill"),
+      grab=document.getElementById("grab"), rd=document.getElementById("rd"),
+      verdict=document.getElementById("verdict");
+  var level = typeof store.level==="number" ? store.level : 30;
+
+  function verdictFor(v){
+    if(v>=75) return ["crit","<strong>รถเริ่มลอยได้</strong> เครื่องยนต์เสียหายจากน้ำเข้าไปแล้ว ตอนนี้เป้าหมายเหลือแค่กันรถไหลไปชนของอื่น และความปลอดภัยของตัวเอง อย่าลงไปในน้ำระดับนี้เพื่อทำอะไรกับรถอีก"];
+    if(v>=60) return ["crit","<strong>เลยจุดตายแล้ว</strong> น้ำถึงปากท่อไอดี ถือว่าน้ำเข้าเครื่องแล้ว ห้ามสตาร์ทเด็ดขาดไม่ว่ากรณีใด ที่เหลือคือกันรถลอย ข้อ 6 และเก็บหลักฐานเคลม ข้อ 7"];
+    if(v>=45) return ["crit","<strong>เหลือระยะ "+(60-v)+" ซม. ถึงจุดตาย</strong> ระบบไฟเริ่มโดนแล้ว หยุดงานละเอียดทั้งหมด ไปทำข้อ 4 อุดท่อไอดี ให้เสร็จเป็นอันดับแรก แล้วต่อด้วยข้อ 6 ผูกรถ"];
+    if(v>=32) return ["warn","<strong>เหลือระยะ "+(60-v)+" ซม. ถึงจุดตาย</strong> น้ำเข้าห้องโดยสารแล้ว เร่งข้อ 1 ถอดแบต และข้อ 5 เก็บของ ถ้ายังไม่ได้หนุนล้อให้ประเมินว่าพื้นยังแข็งพออยู่ไหม"];
+    if(v>=25) return ["warn","<strong>เหลือระยะ "+(60-v)+" ซม. ถึงจุดตาย</strong> เครื่องยนต์ยังปลอดภัยถ้าไม่สตาร์ท เวลาช่วงนี้มีค่าที่สุด ทำข้อ 1 ถึง 3 ให้จบก่อน"];
+    return ["","<strong>ยังมีเวลา</strong> เครื่องยนต์ยังไม่เสี่ยง ใช้ช่วงนี้จัดของตามรายการด้านล่างแล้วเริ่มข้อ 1"];
+  }
+
+  function render(){
+    var pct=Math.max(0,Math.min(100, level/MAX*100));
+    fill.style.height=pct+"%";
+    grab.style.bottom=pct+"%";
+    rd.textContent=level;
+    col.setAttribute("aria-valuenow", level);
+    col.setAttribute("aria-valuetext", level+" เซนติเมตร");
+    var v=verdictFor(level);
+    verdict.className="verdict "+v[0];
+    verdict.innerHTML=v[1];
+  }
+  function set(v){
+    level=Math.max(0,Math.min(MAX, Math.round(v)));
+    store.level=level; save(); render();
+  }
+  function fromPointer(ev){
+    var r=col.getBoundingClientRect();
+    set((1-(ev.clientY-r.top)/r.height)*MAX);
+  }
+  var dragging=false;
+  col.addEventListener("pointerdown",function(e){
+    dragging=true; col.setPointerCapture(e.pointerId); fromPointer(e); e.preventDefault();
+  });
+  col.addEventListener("pointermove",function(e){ if(dragging) fromPointer(e); });
+  col.addEventListener("pointerup",function(){ dragging=false; });
+  col.addEventListener("pointercancel",function(){ dragging=false; });
+  col.addEventListener("keydown",function(e){
+    var k=e.key;
+    if(k==="ArrowUp"||k==="ArrowRight"){ set(level+1); e.preventDefault(); }
+    else if(k==="ArrowDown"||k==="ArrowLeft"){ set(level-1); e.preventDefault(); }
+    else if(k==="PageUp"){ set(level+5); e.preventDefault(); }
+    else if(k==="PageDown"){ set(level-5); e.preventDefault(); }
+    else if(k==="Home"){ set(0); e.preventDefault(); }
+    else if(k==="End"){ set(MAX); e.preventDefault(); }
+  });
+  document.getElementById("up").addEventListener("click",function(){ set(level+5); });
+  document.getElementById("dn").addEventListener("click",function(){ set(level-5); });
+  render();
+
+  /* ---- checklists ---- */
+  var boxes=Array.prototype.slice.call(document.querySelectorAll("input[data-k]"));
+  var stepBoxes=Array.prototype.slice.call(document.querySelectorAll("#steps input[data-k]"));
+  var pcount=document.getElementById("pcount"), pbar=document.getElementById("pbar");
+
+  function progress(){
+    var done=stepBoxes.filter(function(b){return b.checked;}).length;
+    pcount.textContent="เสร็จ "+done+" จาก "+stepBoxes.length;
+    pbar.style.width=(done/stepBoxes.length*100)+"%";
+  }
+  boxes.forEach(function(b){
+    if(store[b.dataset.k]) b.checked=true;
+    b.addEventListener("change",function(){
+      if(b.checked) store[b.dataset.k]=1; else delete store[b.dataset.k];
+      save(); progress();
+    });
+  });
+  progress();
+
+  document.getElementById("reset").addEventListener("click",function(){
+    boxes.forEach(function(b){ b.checked=false; delete store[b.dataset.k]; });
+    save(); progress();
+  });
+})();
+</script>
+</body>
+</html>
